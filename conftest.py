@@ -1,4 +1,1 @@
-from dotenv import load_dotenv
-from fixtures.api_fixtures import *
-
-load_dotenv()
+pytest_plugins = ["fixtures.api_fixtures"]

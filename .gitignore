@@ -1,25 +1,31 @@
-# Virtual environment
+# Виртуальное окружение
 venv/
 .venv/
 env/
-.env
 
-# Python
+# Файлы, созданные Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
+*.db
+*.sqlite3
 
-# IDE
+# Файлы, созданные IDE
 .idea/
 .vscode/
 *.iml
 
-# Testing
+# Переменные окружения
+.env
+
+# Директории с результатами тестов
+allure-report/
+allure-results/
 .pytest_cache/
-.coverage
+.coverage/
 htmlcov/
 
-# Project specific
+# Специфичные для проекта файлы
 response.json

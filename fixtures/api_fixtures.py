@@ -5,6 +5,7 @@ import requests
 from dotenv import load_dotenv
 from helpers.file_helpers import load_sql
 from helpers.api_helpers import ApiSession
+from config.api_config import BASE_URL
 
 # Загружаем переменные окружения из файла .env
 load_dotenv()
@@ -12,9 +13,9 @@ load_dotenv()
 
 @pytest.fixture(scope="session")
 def api_session():
-    """Фикстура для работы с API через ApiSession (с защитой от rate limiter)"""
+    """Фикстура для работы с API через ApiSession (с защитой от rate limiter и логированием в Allure)"""
     session = requests.Session()
-    return ApiSession(session)
+    return ApiSession(session, base_url=BASE_URL)
 
 
 @pytest.fixture(scope="session")

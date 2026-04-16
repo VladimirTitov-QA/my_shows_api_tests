@@ -3,7 +3,6 @@
 Тестовый проект для автоматизации тестирования API сервиса My Shows (сервис для ведения рейтинга сериалов).
 
 ## Структура проекта
-
 ```
 myshows_api_tests/
 │
@@ -19,7 +18,7 @@ myshows_api_tests/
 │ └── api_fixtures.py # Фикстуры для работы с БД и API
 │
 ├── helpers/
-│ ├── api_helpers.py # ApiSession с обработкой rate limiter
+│ ├── api_helpers.py # ApiSession с обработкой rate limiter и логированием в Allure
 │ └── file_helpers.py # Вспомогательные функции (загрузка SQL/YAML)
 │
 ├── schemas/
@@ -39,8 +38,7 @@ myshows_api_tests/
 ## Пояснения
 
 ### Фикстуры
-- **`api_session`** — сессия для работы с API с автоматической обработкой rate limiter (повторные попытки 
-при превышении лимита запросов).
+- **`api_session`** — сессия для работы с API с автоматической обработкой rate limiter и логированием в Allure.
 - **`db_connection`** — подключение к PostgreSQL, автоматически закрывается после завершения сессии тестов.
 - **`insert_series_from_file`** — параметризованная фикстура, вставляет данные из указанного SQL-файла. 
 Для случая 0 строк принимает `None` и просто очищает таблицу. Возвращает количество сериалов в БД.
@@ -54,11 +52,16 @@ myshows_api_tests/
 количестве сериалов в БД: 0, 1 и 3. Валидирует JSON Schema и количество записей.
 - **`test_get_series_with_invalid_status`** — негативный тест. Проверяет, что при передаче некорректного статуса 
 API возвращает ошибку 400.
-- 
+
 #### PUT `/api/v1/series/{id}`
 - **`test_update_series_single_field`** — параметризованный позитивный тест. Проверяет обновление 
 каждого из 5 полей сериала: `name`, `photo`, `rating`, `status`, `review`. Для каждого поля выполняется отдельный тест 
 с проверкой ответа API и состояния базы данных.
+
+### Allure-отчёты
+- **Класс `ApiSession`** автоматически логирует все запросы и ответы в Allure-отчёт.
+- **Все тесты** обёрнуты в `@allure.suite`, `@allure.title` и `with allure.step()` для детализации шагов.
+- **Allure-результаты** сохраняются в папку `allure-results` при каждом запуске тестов.
 
 ### Прочее
 - **JSON Schema валидация** через YAML-файлы обеспечивает строгую проверку структуры и типов данных ответа API.
@@ -68,6 +71,7 @@ API возвращает ошибку 400.
 - **Файл `.env`** хранит параметры подключения к БД и не попадает в Git, что безопасно.
 
 ## Запуск тестов
+
 ```bash
 # Запуск всех тестов
 pytest -v
@@ -85,10 +89,24 @@ pytest -v tests/test_series_api.py::TestGetSeries
 pytest -v tests/test_series_api.py::TestGetSeries::test_get_series_returns_list[zero_series]
 ```
 
+## Генерация Allure-отчёта
+
+```bash
+# 1. Запустить тесты (результаты сохранятся в allure-results)
+pytest -v
+
+# 2. Сгенерировать единый HTML-отчёт
+allure generate allure-results -o allure-report --clean --single-file
+
+# 3. Открыть отчёт для просмотра
+allure open allure-report
+```
+
 ## Требования
 - Python 3.14+
 - Docker и Docker Compose (для запуска тестируемого сервиса My Shows)
 - Установленные зависимости из `requirements.txt`
+- - Allure Report (установленный локально)
 - Файл `.env` с переменными подключения к БД:
 
 ```
@@ -99,7 +117,7 @@ POSTGRES_PASSWORD="смотри в ТЗ"
 ```
 
 ## Предварительные шаги
-1. Запустить сервис My Shows локально через Docker Compose
+1. Запустить сервис My Shows (`my-shows-rating`) локально через Docker Compose
 2. Убедиться, что база данных доступна по указанным в `.env` параметрам
 
 #### Проект выполнен в рамках учебной программы по автоматизации тестирования API

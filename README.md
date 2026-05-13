@@ -30,6 +30,7 @@ myshows_api_tests/
 ├── .env # Переменные окружения (данные для БД)
 ├── .gitignore # Исключения для Git
 ├── conftest.py # Подключение фикстур для pytest
+├── Dockerfile # Инструкции для сборки Docker образа с тестами
 ├── pytest.ini # Настройки и маркеры pytest
 ├── README.md # Описание проекта
 └── requirements.txt # Зависимости проекта
@@ -70,8 +71,13 @@ API возвращает ошибку 400.
 ответственности, упрощая поддержку и масштабирование проекта.
 - **Файл `.env`** хранит параметры подключения к БД и не попадает в Git, что безопасно.
 
-## Запуск тестов
+### Dockerfile
+- **Dockerfile** — файл для сборки Docker-образа с тестами. В нём:
+  - Устанавливаются системные зависимости (`libpq-dev`, `gcc`), необходимые для `psycopg2`.
+  - Копируется код проекта и устанавливаются Python-зависимости из `requirements.txt`.
+  - Команда по умолчанию — `pytest -v`.
 
+## Запуск тестов
 ```bash
 # Запуск всех тестов
 pytest -v
@@ -89,8 +95,22 @@ pytest -v tests/test_series_api.py::TestGetSeries
 pytest -v tests/test_series_api.py::TestGetSeries::test_get_series_returns_list[zero_series]
 ```
 
-## Генерация Allure-отчёта
+## Запуск тестов через Docker
+```bash
+# Сборка образа
+docker build -t myshows-api-tests:v1 .
 
+# Просмотр списка тестов (без выполнения)
+docker run --rm myshows-api-tests:v1 pytest --collect-only
+
+# Запуск всех тестов (требуется работающее приложение и БД)
+docker run --rm --network host myshows-api-tests:v1 pytest -v
+```
+**Примечание:**
+- Для полноценного запуска тестов с подключением к БД и бэкенду используйте docker-compose 
+(см. отдельные инструкции в уроке по Docker Compose).
+
+## Генерация Allure-отчёта
 ```bash
 # 1. Запустить тесты (результаты сохранятся в allure-results)
 pytest -v
@@ -106,9 +126,8 @@ allure open allure-report
 - Python 3.14+
 - Docker и Docker Compose (для запуска тестируемого сервиса My Shows)
 - Установленные зависимости из `requirements.txt`
-- - Allure Report (установленный локально)
+- Allure Report (установленный локально)
 - Файл `.env` с переменными подключения к БД:
-
 ```
 POSTGRES_DB=my-shows-rating
 POSTGRES_HOST=localhost

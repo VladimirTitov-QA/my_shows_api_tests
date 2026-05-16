@@ -44,7 +44,7 @@ myshows_api_tests/
 - **`api_session`** — сессия для работы с API с автоматической обработкой rate limiter и логированием в Allure.
 - **`db_connection`** — подключение к PostgreSQL, автоматически закрывается после завершения сессии тестов.
 - **`insert_series_from_file`** — параметризованная фикстура, вставляет данные из указанного SQL-файла. 
-Для случая 0 строк принимает `None` и просто очищает таблицу. Возвращает количество сериалов в БД.
+  Для случая 0 строк принимает `None` и просто очищает таблицу. Возвращает количество сериалов в БД.
 - **`insert_data_series`** — фикстура для вставки 3 тестовых сериалов (используется в негативном тесте).
 - **`create_single_series`** — фикстура создаёт один сериал и возвращает его ID (используется в PUT тестах).
 
@@ -52,14 +52,14 @@ myshows_api_tests/
 
 #### GET `/api/v1/series`
 - **`test_get_series_returns_list`** — параметризованный позитивный тест. Проверяет ответ API при разном 
-количестве сериалов в БД: 0, 1 и 3. Валидирует JSON Schema и количество записей.
+  количестве сериалов в БД: 0, 1 и 3. Валидирует JSON Schema и количество записей.
 - **`test_get_series_with_invalid_status`** — негативный тест. Проверяет, что при передаче некорректного статуса 
-API возвращает ошибку 400.
+  API возвращает ошибку 400.
 
 #### PUT `/api/v1/series/{id}`
 - **`test_update_series_single_field`** — параметризованный позитивный тест. Проверяет обновление 
-каждого из 5 полей сериала: `name`, `photo`, `rating`, `status`, `review`. Для каждого поля выполняется отдельный тест 
-с проверкой ответа API и состояния базы данных.
+  каждого из 5 полей сериала: `name`, `photo`, `rating`, `status`, `review`. Для каждого поля выполняется отдельный тест 
+  с проверкой ответа API и состояния базы данных.
 
 ### Allure-отчёты
 - **Класс `ApiSession`** автоматически логирует все запросы и ответы в Allure-отчёт.
@@ -70,13 +70,13 @@ API возвращает ошибку 400.
 - **JSON Schema валидация** через YAML-файлы обеспечивает строгую проверку структуры и типов данных ответа API.
 - **Маркеры `positive` / `negative`** позволяют запускать тесты группами без дублирования кода.
 - **Разделение на `config/`, `data/`, `fixtures/`, `helpers/`, `schemas/`** обеспечивает чистое разделение 
-ответственности, упрощая поддержку и масштабирование проекта.
+  ответственности, упрощая поддержку и масштабирование проекта.
 - **Файл `.env`** хранит параметры подключения к БД и не попадает в Git, что безопасно.
 - **Файл `.env.local`** используется для локального запуска тестов (вне Docker). 
-В нём задаётся `POSTGRES_HOST=localhost` и другие параметры. Загружается в `api_fixtures.py` через `load_dotenv('.env.local')`.
+  В нём задаётся `POSTGRES_HOST=localhost` и другие параметры. Загружается в `api_fixtures.py` через `load_dotenv('.env.local')`.
 - **`config/api_config.py`** теперь читает переменную `API_BASE_URL` (значение по умолчанию `http://localhost/api/v1`). 
-Благодаря этому тесты могут работать как локально, так и внутри Docker, где через `docker-compose.yml` 
-передаётся `API_BASE_URL=http://msr-backend:8000/api/v1`.
+  Благодаря этому тесты могут работать как локально, так и внутри Docker, где через `docker-compose.yml` 
+  передаётся `API_BASE_URL=http://msr-backend:8000/api/v1`.
 
 ### Dockerfile
 - **Dockerfile** — файл для сборки Docker-образа с тестами. В нём:
@@ -87,7 +87,7 @@ API возвращает ошибку 400.
 ### Docker Compose
 - **`docker-compose.yml`** описывает три сервиса: `msr-db`, `msr-backend` и `api-tests`.
 - Тесты зависят от здоровья бэкенда (`condition: service_healthy`), 
-подключаются к API через `API_BASE_URL=http://msr-backend:8000/api/v1`, а к БД через `POSTGRES_HOST=msr-db`.
+  подключаются к API через `API_BASE_URL=http://msr-backend:8000/api/v1`, а к БД через `POSTGRES_HOST=msr-db`.
 - Для запуска достаточно выполнить `docker-compose up --build` из папки проекта.
 
 ## Запуск тестов локально
@@ -108,7 +108,7 @@ pytest -v tests/test_series_api.py::TestGetSeries
 pytest -v tests/test_series_api.py::TestGetSeries::test_get_series_returns_list[zero_series]
 ```
 
-## Генерация Allure-отчёта
+## Генерация Allure-отчёта после запуска тестов локально
 ```bash
 # 1. Запустить тесты (результаты сохранятся в allure-results)
 pytest -v
@@ -150,7 +150,22 @@ docker-compose logs -f
 docker-compose down
 ```
 **Примечание:** тесты запускаются автоматически после готовности бэкенда. Контейнер с тестами завершится (exit 0), 
-а приложение останется работать. Для повторного прогона снова выполните `docker-compose up --build`.
+а приложение останется работать. Результаты Allure сохраняются в папку `./allure-results` на хосте 
+(благодаря смонтированному тому). Для повторного прогона тестов снова выполнить `docker-compose up --build`.
+
+## Генерация Allure-отчёта после запуска тестов через Docker Compose
+```bash
+# 1. Запустить тесты через Docker Compose (результаты сохранятся в ./allure-results)
+docker-compose up --build
+
+# 2. Сгенерировать единый HTML-отчёт из результатов, полученных в Docker
+allure generate allure-results -o allure-report --clean --single-file
+
+# 3. Открыть отчёт для просмотра
+allure open allure-report
+```
+**Примечание:** папка `allure-results` монтируется в контейнер и появляется на хосте после выполнения тестов. 
+Она уже добавлена в `.gitignore`.
 
 ## Требования
 - Python 3.14+
@@ -162,22 +177,59 @@ docker-compose down
 POSTGRES_DB=my-shows-rating
 POSTGRES_HOST=msr-db
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD="смотри в ТЗ"
+POSTGRES_PASSWORD=123456
 ```
 - Файл `.env.local` с переменными подключения к БД (для локального запуска тестов, не обязателен, 
-если тесты запускаются только через Docker):
+  если тесты запускаются только через Docker):
 ```
 POSTGRES_DB=my-shows-rating
 POSTGRES_HOST=localhost
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD="смотри в ТЗ"
+POSTGRES_PASSWORD=123456
 ```
 
 ## Предварительные шаги
-1. Запустить сервис My Shows (`my-shows-rating`) локально через Docker Compose (или вручную).
-2. Убедиться, что база данных доступна по указанным в `.env` (или `.env.local`) параметрам.
-3. Для локального запуска тестов (без Docker) убедиться, 
-что PostgreSQL работает на `localhost:5432` и создана база `my-shows-rating`.
+
+### Для локального запуска тестов (без Docker)
+1. Запустить приложение **My Shows Rating** (`my-shows-rating`) локально через Docker Compose.
+2. Создать в корне проекта **My Shows Api Tests** (`myshows_api_tests`) файл `.env.local`
+   (пример содержимого см. в разделе **Требования**).
+3. Убедиться, что PostgreSQL запущен на `localhost:5432`, база `my-shows-rating` создана, 
+   а параметры подключения совпадают с указанными в `.env.local`.
+4. Установить зависимости: `pip install -r requirements.txt`.
+5. Установить Allure Report (CLI-инструмент) – не входит в `requirements.txt`, 
+   необходим для генерации Allure-отчёта (HTML-отчёта) из результатов тестов.
+
+### Для запуска тестов через Docker Compose
+1. Создать в корне проекта файл `.env` с содержимым:
+``` bash
+PROJECT_NAME=QAS-MSR
+ENV=prod
+
+PORT=8000
+CORS_ORIGINS_STRING='http://127.0.0.1 http://127.0.0.1:3000'
+
+POSTGRES_DB=my-shows-rating
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=123456
+POSTGRES_HOST=msr-db
+POSTGRES_PORT=5432
+POSTGRES_PATH=${POSTGRES_DB}
+POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_PATH}
+
+HOST=0.0.0.0
+FRONTEND_PORT=3000
+ORIGIN=http://127.0.0.1
+XFF_DEPTH=2
+ADDRESS_HEADER=X-Forwarded-For
+PROTOCOL_HEADER=X-Forwarded-Proto
+HOST_HEADER=X-Forwarded-Host
+SERVERDEV=false
+```
+2. Запустить docker compose
+```bash
+docker-compose up -d --build
+```
 
 #### Проект выполнен в рамках учебной программы по автоматизации тестирования API
 

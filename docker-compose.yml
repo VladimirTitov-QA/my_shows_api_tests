@@ -43,24 +43,26 @@ services:
   # ============================================
 
   api-tests:
-    container_name: msr-api-tests
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      msr-backend:
-        condition: service_healthy
-    environment:
-      # Подключение к API внутри Docker-сети
-      API_BASE_URL: http://msr-backend:8000/api/v1
-      # Подключение к БД внутри Docker-сети
-      POSTGRES_DB: my-shows-rating
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "123456"
-      POSTGRES_HOST: msr-db
-      POSTGRES_PORT: "5432"
+    container_name: msr-api-tests                     # имя контейнера с тестами
+    build:                                            # инструкция для сборки образа
+      context: .                                      # контекст сборки – текущая папка
+      dockerfile: Dockerfile                          # путь к Dockerfile
+    depends_on:                                       # зависимость от других сервисов
+      msr-backend:                                    # ждём готовности бэкенда
+        condition: service_healthy                    # условие – healthcheck пройден
+    environment:                                      # переменные окружения для контейнера
+      API_BASE_URL: http://msr-backend:8000/api/v1    # подключение к API внутри Docker-сети
+      POSTGRES_DB: my-shows-rating                    # подключение к БД внутри Docker-сети
+      POSTGRES_USER: postgres                         # пользователь БД
+      POSTGRES_PASSWORD: "123456"                     # пароль БД
+      POSTGRES_HOST: msr-db                           # хост БД (имя сервиса в сети)
+      POSTGRES_PORT: "5432"                           # порт БД
     networks:
-      - test-network
+      - test-network                                  # подключение к общей сети для доступа к msr-db и msr-backend
+    volumes:
+      - ./allure-results:/app/allure-results          # создаём локальную папку для Allure-результатов
+    # запускаем pytest с сохранением отчётов Allure в allure-results и очисткой старых
+    command: [ "pytest", "-v", "--alluredir=/app/allure-results", "--clean-alluredir" ]
 
 networks:
   test-network:

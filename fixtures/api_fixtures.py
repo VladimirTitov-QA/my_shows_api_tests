@@ -7,8 +7,8 @@ from helpers.file_helpers import load_sql
 from helpers.api_helpers import ApiSession
 from config.api_config import BASE_URL
 
-# Загружаем переменные окружения из файла .env
-load_dotenv()
+# Загружаем переменные окружения из файла .env.local
+load_dotenv('.env.local')
 
 
 @pytest.fixture(scope="session")

@@ -27,9 +27,11 @@ myshows_api_tests/
 ├── tests/
 │ └── test_series_api.py # Тесты для GET и PUT /api/v1/series
 │
-├── .env # Переменные окружения (данные для БД)
+├── .env # Переменные окружения для работы приложения (не попадает в Git)
+├── .env.local # Переменные окружения для локального запуска тестов (не попадает в Git)
 ├── .gitignore # Исключения для Git
 ├── conftest.py # Подключение фикстур для pytest
+├── docker-compose.yml # Запуск приложения + тестов через Docker Compose
 ├── Dockerfile # Инструкции для сборки Docker образа с тестами
 ├── pytest.ini # Настройки и маркеры pytest
 ├── README.md # Описание проекта
@@ -70,6 +72,11 @@ API возвращает ошибку 400.
 - **Разделение на `config/`, `data/`, `fixtures/`, `helpers/`, `schemas/`** обеспечивает чистое разделение 
 ответственности, упрощая поддержку и масштабирование проекта.
 - **Файл `.env`** хранит параметры подключения к БД и не попадает в Git, что безопасно.
+- **Файл `.env.local`** используется для локального запуска тестов (вне Docker). 
+В нём задаётся `POSTGRES_HOST=localhost` и другие параметры. Загружается в `api_fixtures.py` через `load_dotenv('.env.local')`.
+- **`config/api_config.py`** теперь читает переменную `API_BASE_URL` (значение по умолчанию `http://localhost/api/v1`). 
+Благодаря этому тесты могут работать как локально, так и внутри Docker, где через `docker-compose.yml` 
+передаётся `API_BASE_URL=http://msr-backend:8000/api/v1`.
 
 ### Dockerfile
 - **Dockerfile** — файл для сборки Docker-образа с тестами. В нём:
@@ -77,7 +84,13 @@ API возвращает ошибку 400.
   - Копируется код проекта и устанавливаются Python-зависимости из `requirements.txt`.
   - Команда по умолчанию — `pytest -v`.
 
-## Запуск тестов
+### Docker Compose
+- **`docker-compose.yml`** описывает три сервиса: `msr-db`, `msr-backend` и `api-tests`.
+- Тесты зависят от здоровья бэкенда (`condition: service_healthy`), 
+подключаются к API через `API_BASE_URL=http://msr-backend:8000/api/v1`, а к БД через `POSTGRES_HOST=msr-db`.
+- Для запуска достаточно выполнить `docker-compose up --build` из папки проекта.
+
+## Запуск тестов локально
 ```bash
 # Запуск всех тестов
 pytest -v
@@ -95,21 +108,6 @@ pytest -v tests/test_series_api.py::TestGetSeries
 pytest -v tests/test_series_api.py::TestGetSeries::test_get_series_returns_list[zero_series]
 ```
 
-## Запуск тестов через Docker
-```bash
-# Сборка образа
-docker build -t myshows-api-tests:v1 .
-
-# Просмотр списка тестов (без выполнения)
-docker run --rm myshows-api-tests:v1 pytest --collect-only
-
-# Запуск всех тестов (требуется работающее приложение и БД)
-docker run --rm --network host myshows-api-tests:v1 pytest -v
-```
-**Примечание:**
-- Для полноценного запуска тестов с подключением к БД и бэкенду используйте docker-compose 
-(см. отдельные инструкции в уроке по Docker Compose).
-
 ## Генерация Allure-отчёта
 ```bash
 # 1. Запустить тесты (результаты сохранятся в allure-results)
@@ -122,12 +120,52 @@ allure generate allure-results -o allure-report --clean --single-file
 allure open allure-report
 ```
 
+## Запуск тестов через Docker (сборка образа и ручной запуск)
+```bash
+# Сборка образа
+docker build -t myshows-api-tests:v1 .
+
+# Просмотр списка тестов (без выполнения)
+docker run --rm myshows-api-tests:v1 pytest --collect-only
+
+# Запуск всех тестов (требуется работающее приложение и БД)
+docker run --rm --network host myshows-api-tests:v1 pytest -v
+```
+
+## Запуск тестов через Docker Compose (запуск приложения и тестов в одной сети)
+```bash
+# Сборка и запуск всех сервисов (приложение + тесты)
+docker-compose up --build
+
+# Сборка и запуск всех сервисов (приложение + тесты) в фоновом режиме
+docker-compose up -d --build
+
+# Просмотр логов тестов
+docker-compose logs api-tests
+
+# Просмотр логов всех сервисов в реальном времени
+docker-compose logs -f
+
+# Остановка и удаление всех контейнеров
+docker-compose down
+```
+**Примечание:** тесты запускаются автоматически после готовности бэкенда. Контейнер с тестами завершится (exit 0), 
+а приложение останется работать. Для повторного прогона снова выполните `docker-compose up --build`.
+
 ## Требования
 - Python 3.14+
 - Docker и Docker Compose (для запуска тестируемого сервиса My Shows)
 - Установленные зависимости из `requirements.txt`
 - Allure Report (установленный локально)
-- Файл `.env` с переменными подключения к БД:
+- Файл `.env` с переменными подключения к БД (для Docker-приложения):
+```
+POSTGRES_DB=my-shows-rating
+POSTGRES_HOST=msr-db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD="смотри в ТЗ"
+```
+- Файл `.env.local` с переменными подключения к БД (для локального запуска тестов, не обязателен, 
+если тесты запускаются только через Docker):
 ```
 POSTGRES_DB=my-shows-rating
 POSTGRES_HOST=localhost
@@ -136,8 +174,10 @@ POSTGRES_PASSWORD="смотри в ТЗ"
 ```
 
 ## Предварительные шаги
-1. Запустить сервис My Shows (`my-shows-rating`) локально через Docker Compose
-2. Убедиться, что база данных доступна по указанным в `.env` параметрам
+1. Запустить сервис My Shows (`my-shows-rating`) локально через Docker Compose (или вручную).
+2. Убедиться, что база данных доступна по указанным в `.env` (или `.env.local`) параметрам.
+3. Для локального запуска тестов (без Docker) убедиться, 
+что PostgreSQL работает на `localhost:5432` и создана база `my-shows-rating`.
 
 #### Проект выполнен в рамках учебной программы по автоматизации тестирования API
 

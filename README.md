@@ -172,37 +172,17 @@ allure open allure-report
 - Docker и Docker Compose (для запуска тестируемого сервиса My Shows)
 - Установленные зависимости из `requirements.txt`
 - Allure Report (установленный локально)
-- Файл `.env` с переменными подключения к БД (для Docker-приложения):
-```
-POSTGRES_DB=my-shows-rating
-POSTGRES_HOST=msr-db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=123456
-```
-- Файл `.env.local` с переменными подключения к БД (для локального запуска тестов, не обязателен, 
-  если тесты запускаются только через Docker):
+- Файл `.env.local` с переменными подключения к БД (для локального запуска тестов, 
+  не обязателен, если тесты запускаются только через Docker):
 ```
 POSTGRES_DB=my-shows-rating
 POSTGRES_HOST=localhost
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=123456
 ```
-
-## Предварительные шаги
-
-### Для локального запуска тестов (без Docker)
-1. Запустить приложение **My Shows Rating** (`my-shows-rating`) локально через Docker Compose.
-2. Создать в корне проекта **My Shows Api Tests** (`myshows_api_tests`) файл `.env.local`
-   (пример содержимого см. в разделе **Требования**).
-3. Убедиться, что PostgreSQL запущен на `localhost:5432`, база `my-shows-rating` создана, 
-   а параметры подключения совпадают с указанными в `.env.local`.
-4. Установить зависимости: `pip install -r requirements.txt`.
-5. Установить Allure Report (CLI-инструмент) – не входит в `requirements.txt`, 
-   необходим для генерации Allure-отчёта (HTML-отчёта) из результатов тестов.
-
-### Для запуска тестов через Docker Compose
-1. Создать в корне проекта файл `.env` с содержимым:
-``` bash
+- Файл `.env` с содержимым (для Docker-приложения,
+  не обязателен, если тесты запускаются только локально):
+```
 PROJECT_NAME=QAS-MSR
 ENV=prod
 
@@ -226,6 +206,23 @@ PROTOCOL_HEADER=X-Forwarded-Proto
 HOST_HEADER=X-Forwarded-Host
 SERVERDEV=false
 ```
+
+## Предварительные шаги
+
+### Для локального запуска тестов (без Docker)
+1. Запустить приложение **My Shows Rating** (`my-shows-rating`) локально через Docker Compose.
+2. Создать в корне проекта **My Shows Api Tests** (`myshows_api_tests`) файл `.env.local`
+   (пример содержимого см. в разделе **Требования**).
+3. Убедиться, что PostgreSQL запущен на `localhost:5432`, база `my-shows-rating` создана, 
+   а параметры подключения совпадают с указанными в `.env.local`.
+4. Установить зависимости: `pip install -r requirements.txt`.
+5. Установить Allure Report (CLI-инструмент) – не входит в `requirements.txt`, 
+   необходим для генерации Allure-отчёта (HTML-отчёта) из результатов тестов.
+
+### Для запуска тестов через Docker Compose
+1. Создать в корне проекта **My Shows Api Tests** (`myshows_api_tests`) файл `.env`
+   (пример содержимого см. в разделе **Требования**).
+
 2. Запустить docker compose
 ```bash
 docker-compose up -d --build
